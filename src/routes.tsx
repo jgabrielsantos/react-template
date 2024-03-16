@@ -1,43 +1,42 @@
 import React from 'react';
 import {
   Route, Outlet, createBrowserRouter, createRoutesFromElements, RouterProvider,
+  Navigate,
 } from 'react-router-dom';
-import { CacheProvider } from './context';
+import { ContextProvider } from './context';
 import {
   Dashboard, Login, SignUp,
 } from './pages';
-import { Example } from './pages/Example';
+import { PATH } from './utils';
 
 const Layout = () => (
-  <CacheProvider>
+  <ContextProvider>
     <Outlet />
-  </CacheProvider>
+  </ContextProvider>
 );
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<Layout />}>
       <Route
-        path='/'
+        path={PATH.get('ROOT').URL}
         element={<Dashboard />}
-      />
-      <Route
-        path='/example'
-        element={<Example />}
       />
 
       {/* Unprotected Routes */}
       <Route
-        path='/login'
+        path={PATH.get('LOGIN').URL}
         element={<Login />}
       />
       <Route
-        path='/signup'
+        path={PATH.get('SIGNUP').URL}
         element={<SignUp />}
       />
+
+      {/* Redirection to 404 page or Login */}
       <Route
         path='*'
-        element={<Login />} // Redirect to 404 or Login page
+        element={<Navigate to={PATH.get('LOGIN').URL} />}
       />
     </Route>,
   ),
