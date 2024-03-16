@@ -1,15 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { checkForCookie } from '../../utils';
+import { faker } from '@faker-js/faker';
+import { PATH, checkForCookie } from '../../utils';
 import { ENVIRONMENT } from '../../config/environment';
-import { useCacheContext, useFetch } from '../../hooks';
+import { useSystemContext, useFetch } from '../../hooks';
 
 export const useAppWrapper = () => {
   const navigate = useNavigate();
 
-  const { hookCacheContextState, hookCacheContextDispatcher } = useCacheContext();
+  const { contextState, contextDispatcher } = useSystemContext();
 
-  const freshUser = async (session: string) => {
+  const getUser = async (session: string) => {
     // const { status, data } = await useFetch({
     //   method: 'GET',
     //   path: `/auth/refresh/${session}`,
@@ -18,8 +19,16 @@ export const useAppWrapper = () => {
     const { status, data } = await Promise.resolve({
       status: 200,
       data: {
-        user: {},
-        tokens: {},
+        user: {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+          name: faker.person.fullName(),
+          createdAt: faker.date.anytime(),
+        },
+        tokens: {
+          accessToken: 'accessToken',
+          refreshToken: 'refreshToken',
+        },
       },
     });
 
@@ -27,28 +36,28 @@ export const useAppWrapper = () => {
       const date = new Date(new Date(Date.now() + 15 * 60 * 1000));
       document.cookie = `${ENVIRONMENT.APP.SESSION_COOKIE_NAME}=${data.tokens.accessToken}; expires=${date.toUTCString()} path=/; SameSite=none;secure`;
 
-      hookCacheContextDispatcher({
-        type: 'updateUser',
+      contextDispatcher({
+        type: 'UPDATE_USER',
         data: { ...data.user },
       });
 
-      hookCacheContextDispatcher({
-        type: 'updateToken',
+      contextDispatcher({
+        type: 'UPDATE_TOKEN',
         data: { ...data.tokens },
       });
       return;
     }
 
-    navigate('/', {
+    navigate(PATH.get('ROOT').URL, {
       replace: true,
     });
   };
 
   const validateUserSession = () => {
     const session = checkForCookie(ENVIRONMENT.APP.SESSION_COOKIE_NAME);
-    if (!session.exist) navigate('/login');
+    if (!session.exist) navigate(PATH.get('LOGIN').URL);
 
-    if (!hookCacheContextState.user.id) freshUser(session.value);
+    if (!contextState.user.id) getUser(session.value);
   };
 
   useEffect(() => {
