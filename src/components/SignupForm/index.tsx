@@ -1,13 +1,7 @@
 import React from 'react';
 import { Input } from 'awesome-gcl';
-import { SignupBasicPropTypes } from '../../pages/SignUp/types';
 import { SIGN_UP_FORM } from './const';
-
-type SignupFormPropTypes = {
-  createAccountState: SignupBasicPropTypes
-  updateFormHandler: (value: Record<string, any>) => void
-  errors: Record<string, string>
-}
+import { SignupFormPropTypes } from './types';
 
 export const SignupForm = ({
   updateFormHandler, createAccountState, errors,
