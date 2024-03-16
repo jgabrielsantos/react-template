@@ -1,14 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { faker } from '@faker-js/faker';
-import { PATH, checkForCookie } from '../../utils';
+import {
+  PATH, checkForCookie, userSession,
+} from '../../utils';
 import { ENVIRONMENT } from '../../config/environment';
 import { useSystemContext, useFetch } from '../../hooks';
 
 export const useAppWrapper = () => {
   const navigate = useNavigate();
 
-  const { contextState, contextDispatcher } = useSystemContext();
+  const { contextState } = useSystemContext();
 
   const getUser = async (session: string) => {
     // const { status, data } = await useFetch({
@@ -23,7 +25,7 @@ export const useAppWrapper = () => {
           id: faker.string.uuid(),
           email: faker.internet.email(),
           name: faker.person.fullName(),
-          createdAt: faker.date.anytime(),
+          createdAt: faker.date.anytime().toString(),
         },
         tokens: {
           accessToken: 'accessToken',
@@ -33,24 +35,12 @@ export const useAppWrapper = () => {
     });
 
     if (status === 200) {
-      const date = new Date(new Date(Date.now() + 15 * 60 * 1000));
-      document.cookie = `${ENVIRONMENT.APP.SESSION_COOKIE_NAME}=${data.tokens.accessToken}; expires=${date.toUTCString()} path=/; SameSite=none;secure`;
-
-      contextDispatcher({
-        type: 'UPDATE_USER',
-        data: { ...data.user },
+      userSession({ data });
+    } else {
+      navigate(PATH.get('ROOT').URL, {
+        replace: true,
       });
-
-      contextDispatcher({
-        type: 'UPDATE_TOKEN',
-        data: { ...data.tokens },
-      });
-      return;
     }
-
-    navigate(PATH.get('ROOT').URL, {
-      replace: true,
-    });
   };
 
   const validateUserSession = () => {

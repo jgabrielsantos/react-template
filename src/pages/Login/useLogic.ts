@@ -1,89 +1,78 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ENVIRONMENT } from '../../config/environment';
+import { faker } from '@faker-js/faker';
 import { validationLogin } from './validation';
 import { useFetch } from '../../hooks';
-import { useCacheContext } from '../../hooks/useSystemContext';
-import { formatYupError } from '../../utils';
+import { PATH, formatYupError, userSession } from '../../utils';
 import { LOGIN } from './const';
+import { LoginReducerTypes, useLoginReducer } from './reducer';
 
 export const useLogin = () => {
   const navigate = useNavigate();
-  const { hookCacheContextDispatcher } = useCacheContext();
+  const [loginState, loginDispatcher] = useReducer(useLoginReducer, {} as LoginReducerTypes);
 
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const emailHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-
-  const passwordHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
-  };
-
-  const handleLogin = async () => {
+  const userLoginHandler = async () => {
     try {
-      await validationLogin({ email, password });
+      await validationLogin({ email: loginState.email, password: loginState.password });
 
-      const { status, data } = await useFetch({
-        method: 'POST',
-        path: '/auth',
-        body: {
-          email,
-          password,
+      // const { status, data } = await useFetch({
+      //   method: 'POST',
+      //   path: '/auth',
+      //   body: {
+      //     email,
+      //     password,
+      //   },
+      // });
+
+      const { status, data } = await Promise.resolve({
+        status: 200,
+        data: {
+          user: {
+            id: faker.string.uuid(),
+            email: faker.internet.email(),
+            name: faker.person.fullName(),
+            createdAt: faker.date.anytime().toString(),
+          },
+          tokens: {
+            accessToken: 'accessToken',
+            refreshToken: 'refreshToken',
+          },
         },
       });
 
       if (status !== 200) {
-        if (status !== 400) setErrors({ ...errors, default: LOGIN.ERRORS.DEFAULT });
-        if (status === 400) setErrors({ ...errors, default: LOGIN.ERRORS.USER });
+        if (status !== 400) loginDispatcher({ type: 'UPDATE_ERRORS', data: { ...loginState.errors, default: LOGIN.ERRORS.DEFAULT } });
+        if (status === 400) loginDispatcher({ type: 'UPDATE_ERRORS', data: { ...loginState.errors, default: LOGIN.ERRORS.USER } });
       } else {
-        const date = new Date(new Date(Date.now() + 15 * 60 * 1000));
-        document.cookie = `${ENVIRONMENT.APP.SESSION_COOKIE_NAME}=${data.tokens.accessToken}; expires=${date.toUTCString()} path=/; SameSite=none;secure`;
+        userSession({ data });
 
-        hookCacheContextDispatcher({
-          type: 'updateUser',
-          data: { ...data.user },
-        });
-
-        hookCacheContextDispatcher({
-          type: 'updateToken',
-          data: { ...data.tokens },
-        });
-
-        navigate('/', {
+        navigate(PATH.get('ROOT').URL, {
           replace: true,
         });
       }
     } catch (error: any) {
       if (error.inner) {
         const formatedErrors = formatYupError(error.inner);
-        setErrors(formatedErrors);
+        loginDispatcher({ type: 'UPDATE_ERRORS', data: { ...formatedErrors } });
       }
     }
   };
 
   useEffect(() => {
-    const updateError = { ...errors };
+    const updateError = { ...loginState.errors };
     delete updateError.email;
-    setErrors(updateError);
-  }, [email]);
+    loginDispatcher({ type: 'UPDATE_ERRORS', data: updateError });
+  }, [loginState.email]);
 
   useEffect(() => {
-    const updateError = { ...errors };
+    const updateError = { ...loginState.errors };
     delete updateError.password;
-    setErrors(updateError);
-  }, [password]);
+    loginDispatcher({ type: 'UPDATE_ERRORS', data: updateError });
+  }, [loginState.password]);
 
   return {
-    email,
-    emailHandler,
-    password,
-    passwordHandler,
-    handleLogin,
-
-    errors,
+    loginState,
+    loginDispatcher,
+    userLoginHandler,
   };
 };

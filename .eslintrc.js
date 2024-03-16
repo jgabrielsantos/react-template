@@ -23,6 +23,7 @@ module.exports = {
   rules: {
     'import/extensions': 'off',
     'import/prefer-default-export': 'off',
+    'import/no-extraneous-dependencies': 'off', // Disabled rule for Faker JS usage
     'max-len': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
   },

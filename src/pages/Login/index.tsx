@@ -11,21 +11,24 @@ export const Login = () => {
     <div className="w-full h-screen flex justify-center items-center">
       <div className="w-[470px] flex flex-col justify-center items-start">
         <h1 className="font-bold text-[32px] mb-[60px]">{LOGIN.TITLE}</h1>
-        {hook.errors.default && (
+        {hook.loginState.errors.default && (
           <div
             className='border-2 border-solid rounded-lg border-support-alert-50 bg-white-100 text-support-alert-50 p-4 mb-8 w-full text-center'
           >
-            {hook.errors.default}
+            {hook.loginState.errors.default}
           </div>
         )}
         <Input
           size='large'
           type='email'
           label={LOGIN.INPUTS.EMAIL.LABEL}
-          value={hook.email}
+          value={hook.loginState.email}
           placeholder={LOGIN.INPUTS.EMAIL.PLACEHOLDER}
-          onChange={(event) => hook.emailHandler(event)}
-          caption={hook.errors.email}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => hook.loginDispatcher({
+            type: 'UPDATE_EMAIL',
+            data: event.target.value,
+          })}
+          caption={hook.loginState.errors.email}
           additionalClasses={{
             inputWrapper: ['w-full'],
             input: ['w-full'],
@@ -36,14 +39,17 @@ export const Login = () => {
           size='large'
           type='password'
           label={LOGIN.INPUTS.PASSWORD.LABEL}
-          value={hook.password}
+          value={hook.loginState.password}
           placeholder={LOGIN.INPUTS.PASSWORD.PLACEHOLDER}
-          onChange={(event) => hook.passwordHandler(event)}
-          caption={hook.errors.password}
-          onKeyDown={(event: any) => {
+          onChange={(event) => hook.loginDispatcher({
+            type: 'UPDATE_PASSWORD',
+            data: event.target.value,
+          })}
+          caption={hook.loginState.errors.password}
+          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
             if (event.key === 'Enter') {
               event.preventDefault();
-              hook.handleLogin();
+              hook.userLoginHandler();
             }
           }}
           additionalClasses={{
@@ -58,7 +64,7 @@ export const Login = () => {
           size='large'
           type='button'
           theme='primary'
-          handleClick={hook.handleLogin}
+          handleClick={hook.userLoginHandler}
           additionalClasses={{
             button: ['w-full'],
           }}
