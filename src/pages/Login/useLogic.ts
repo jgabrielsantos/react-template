@@ -1,17 +1,19 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { faker } from '@faker-js/faker';
 import { validationLogin } from './validation';
-import { useFetch } from '../../hooks';
-import { PATH, formatYupError, userSession } from '../../utils';
+import { useFetch, useSystemContext } from '../../hooks';
+import { PATH, formatYupError } from '../../utils';
 import { LOGIN } from './const';
 import { LoginReducerTypes, useLoginReducer } from './reducer';
+import { ENVIRONMENT } from '../../config/environment';
 
 export const useLogin = () => {
   const navigate = useNavigate();
+  const { contextDispatcher } = useSystemContext();
   const [loginState, loginDispatcher] = useReducer(useLoginReducer, {} as LoginReducerTypes);
 
-  const userLoginHandler = async () => {
+  const useLoginHandler = async () => {
     try {
       await validationLogin({ email: loginState.email, password: loginState.password });
 
@@ -40,15 +42,29 @@ export const useLogin = () => {
         },
       });
 
-      if (status !== 200) {
+      if (status === 200) {
+        try {
+          const date = new Date(new Date(Date.now() + 15 * 60 * 1000));
+
+          document.cookie = `${ENVIRONMENT.APP.SESSION_COOKIE_NAME}=${data.tokens.accessToken}; expires=${date.toUTCString()} path=/; SameSite=none;secure`;
+
+          contextDispatcher({
+            type: 'UPDATE_USER',
+            data: { user: { ...data.user } },
+          });
+
+          contextDispatcher({
+            type: 'UPDATE_TOKEN',
+            data: { tokens: { ...data.tokens } },
+          });
+
+          navigate(PATH.get('HOME').URL);
+        } catch (error) {
+          console.error('Failed to update user session.', error);
+        }
+      } else {
         if (status !== 400) loginDispatcher({ type: 'UPDATE_ERRORS', data: { ...loginState.errors, default: LOGIN.ERRORS.DEFAULT } });
         if (status === 400) loginDispatcher({ type: 'UPDATE_ERRORS', data: { ...loginState.errors, default: LOGIN.ERRORS.USER } });
-      } else {
-        userSession({ data });
-
-        navigate(PATH.get('ROOT').URL, {
-          replace: true,
-        });
       }
     } catch (error: any) {
       if (error.inner) {
@@ -73,6 +89,6 @@ export const useLogin = () => {
   return {
     loginState,
     loginDispatcher,
-    userLoginHandler,
+    useLoginHandler,
   };
 };

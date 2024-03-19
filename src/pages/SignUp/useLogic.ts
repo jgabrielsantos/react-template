@@ -4,7 +4,7 @@ import { useFetch } from '../../hooks';
 import { userAccountValidation } from './validation';
 import { useSignupReducer } from './reducer';
 import { INIT_SIGN_UP_ACCOUNT, SIGN_UP } from './const';
-import { formatYupError } from '../../utils';
+import { PATH, formatYupError } from '../../utils';
 
 export const useSignup = () => {
   const navigate = useNavigate();
@@ -29,9 +29,7 @@ export const useSignup = () => {
       });
 
       if (status === 204) {
-        navigate('/login', {
-          replace: true,
-        });
+        navigate(PATH.get('LOGIN').URL);
       } else {
         if (status === 500) {
           setErrors({ ...errors, default: SIGN_UP.ERRORS.ACCOUNT });

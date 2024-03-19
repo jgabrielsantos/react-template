@@ -15,8 +15,8 @@ PATH.set('SIGNUP', {
 });
 
 // Home Page
-PATH.set('ROOT', {
+PATH.set('HOME', {
   URL: '/',
-  TITLE: 'MAIN PAGE',
+  TITLE: 'HOME PAGE',
   HIDDEN: false,
 });

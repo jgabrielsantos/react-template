@@ -19,7 +19,7 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<Layout />}>
       <Route
-        path={PATH.get('ROOT').URL}
+        path={PATH.get('HOME').URL}
         element={<Dashboard />}
       />
 
